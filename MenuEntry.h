@@ -40,6 +40,7 @@ void MenuEntry_BackCallbackFunc( char * pMenuText, void * pUserData );
 //The MenuEntry class represents one menu item in the overall menu system, such as "Set Time" or "Back"
 //The MenuEntry classes point to each other to create a tree of menu items.  You can navigate
 // the classes using the get* calls.  MenuManager uses the get* calls to figure out what to draw to the LCD
+template <class T>
 class MenuEntry
 {
   public:
@@ -81,6 +82,122 @@ class MenuEntry
   MenuEntry* m_prevSibling;
 };
 
+template <class T>
+MenuEntry<T>::MenuEntry( char * menuText, void * userData, MENU_ACTION_CALLBACK_FUNC func)
+{
+  m_menuText = strdup(menuText);
+  m_userData = userData;
+  m_nextSibling = NULL;
+  m_prevSibling = NULL;
+  m_child = NULL;
+  m_parent = NULL;
+  m_callback = func;
+}
+
+template <class T>
+void MenuEntry<T>::ExecuteCallback()
+{
+  if( m_callback != NULL )
+  {
+    m_callback(m_menuText, m_userData);
+  }
+}
+
+template <class T>
+bool MenuEntry<T>::addChild(MenuEntry* child)
+{
+  child->setParent( this );
+  if(m_child != NULL)
+  {
+    m_child->addSibling( child );
+  }
+  else
+  {
+    m_child = child;
+  }
+  return true;
+}
+
+template <class T>
+bool MenuEntry<T>::addSibling( MenuEntry* sibling)
+{
+  sibling->setParent( m_parent );
+  if( m_nextSibling != NULL )
+  {
+    m_nextSibling->addSibling(sibling);
+  }
+  else
+  {
+    m_nextSibling = sibling;
+    sibling->setPrevSibling( this );
+  }
+}
+
+template <class T>
+void MenuEntry<T>::setPrevSibling( MenuEntry * pPrevSibling)
+{
+  m_prevSibling = pPrevSibling;
+}
+
+template <class T>
+char * MenuEntry<T>::getMenuText()
+{
+  return m_menuText;
+}
+
+template <class T>
+MenuEntry *MenuEntry<T>::getNextSibling()
+{
+  return m_nextSibling;
+}
+
+template <class T>
+MenuEntry *MenuEntry<T>::getPrevSibling()
+{
+  return m_prevSibling;
+}
+
+template <class T>
+MenuEntry *MenuEntry<T>::getChild()
+{
+  return m_child;
+}
+
+template <class T>
+MenuEntry *MenuEntry<T>::getParent()
+{
+  return m_parent;
+}
+
+template <class T>
+void MenuEntry<T>::setParent( MenuEntry * parent)
+{
+  m_parent = parent;
+}
+
+template <class T>
+void MenuEntry_BoolTrueCallbackFunc( char * pMenuText, void * pUserData )
+{
+  *((unsigned int *)pUserData) = true;
+}
+
+template <class T>
+void MenuEntry_BoolFalseCallbackFunc( char * pMenuText, void * pUserData )
+{
+  *((unsigned int *)pUserData) = false;
+}
+
+//template <class T>
+//void MenuEntry_BoolToggleCallbackFunc( char * pMenuText, void * pUserData )
+//{
+//  *((unsigned int *)pUserData) =  !*((unsigned int *)pUserData) ;
+//}
+
+template <class T>
+void MenuEntry_BackCallbackFunc( char * pMenuText, void * pUserData )
+{
+  ((MenuManager<T> *)pUserData)->DoMenuAction( MENU_ACTION_BACK );
+}
 
 
 #endif

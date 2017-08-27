@@ -25,11 +25,12 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 
 enum MENU_ACTION { MENU_ACTION_UP, MENU_ACTION_DOWN, MENU_ACTION_SELECT, MENU_ACTION_BACK };
 
+template <class T>
 class MenuManager
 {
   public:
-  MenuManager(MenuLCD* pMenuLCD); 
-  MenuManager(MenuLCD* pMenuLCD, bool rootAction);
+  MenuManager(MenuLCD<T>* pMenuLCD);
+  MenuManager(MenuLCD<T>* pMenuLCD, bool rootAction);
 
   bool addMenuRoot( MenuEntry * p_menuEntry);
   MenuEntry * getMenuRoot();
@@ -45,14 +46,14 @@ class MenuManager
   void DoIntInput( int iMin, int iMax, int iStart, int iSteps, char **label, int iLabelLines, int *pInt );
   void DrawInputRow( char *pString );
 
-  void WipeMenu( MenuLCD::Direction dir);
+  void WipeMenu( MenuLCD<T>::Direction dir);
 
 
   
   private:
   MenuEntry* m_pRootMenuEntry;
   MenuEntry* m_pCurrentMenuEntry;
-  MenuLCD* m_pMenuLCD;
+  MenuLCD<T>* m_pMenuLCD;
   unsigned int m_fDoingIntInput;
   MenuIntHelper *m_pMenuIntHelper;
   int m_iIntLine;
@@ -61,5 +62,250 @@ class MenuManager
 
 };
 
+template <class T>
+MenuManager<T>::MenuManager(MenuLCD<T>* pMenuLCD): m_pMenuLCD( pMenuLCD),  m_fDoingIntInput( false ){}
 
+// new Constructor which allows us to define in class if we want actions being executed
+// on menus which have a child - or not.
+template <class T>
+MenuManager<T>::MenuManager(MenuLCD<T>* pMenuLCD, bool pexecRootAction ):
+ m_pMenuLCD( pMenuLCD),
+ m_execRootMenuAction (pexecRootAction),
+ m_fDoingIntInput( false ) { }
 
+template <class T>
+bool MenuManager<T>::addMenuRoot( MenuEntry * p_menuItem)
+{
+  m_pRootMenuEntry = p_menuItem;
+  m_pCurrentMenuEntry = p_menuItem;
+}
+
+template <class T>
+void MenuManager<T>::addSibling( MenuEntry * p_menuItem)
+{
+  m_pCurrentMenuEntry->addSibling( p_menuItem );
+}
+
+template <class T>
+void MenuManager<T>::addChild( MenuEntry * p_menuItem)
+{
+  m_pCurrentMenuEntry->addChild( p_menuItem );
+}
+
+template <class T>
+MenuEntry * MenuManager<T>::getMenuRoot()
+{
+  return m_pRootMenuEntry;
+}
+
+template <class T>
+void MenuManager<T>::WipeMenu( MenuLCD<T>::Direction dir )
+{
+  if( dir == MenuLCD<T>::LEFT )
+  {
+    for( int i = 0; i < m_pMenuLCD->getCharacters(); ++i )
+    {
+      m_pMenuLCD->getLCD()->scrollDisplayLeft();
+      delay(10);
+    }
+  }
+  else
+  {
+    for( int i = 0; i < m_pMenuLCD->getCharacters(); ++i )
+    {
+      m_pMenuLCD->getLCD()->scrollDisplayRight();
+      delay(10);
+    }
+  }
+}
+
+template <class T>
+void MenuManager<T>::DrawMenu()
+{
+  if( m_pCurrentMenuEntry->getNextSibling() == NULL )
+  {
+    if( m_pCurrentMenuEntry->getPrevSibling() != NULL )
+    {
+      char *pMenuTexts[2] = {m_pCurrentMenuEntry->getPrevSibling()->getMenuText(), m_pCurrentMenuEntry->getMenuText()};
+      m_pMenuLCD->PrintMenu( pMenuTexts, 2, 1 );
+    }
+    else
+    {
+      char * pText = m_pCurrentMenuEntry->getMenuText();
+      m_pMenuLCD->PrintMenu( &pText, 1, 0 );
+    }
+  }
+  else
+  {
+    char *pMenuTexts[2] = {m_pCurrentMenuEntry->getMenuText(), m_pCurrentMenuEntry->getNextSibling()->getMenuText()};
+    m_pMenuLCD->PrintMenu( pMenuTexts, 2, 0 );
+  }
+}
+
+template <class T>
+void MenuManager<T>::DoMenuAction( MENU_ACTION action )
+{
+  if( m_fDoingIntInput == true )
+  {
+    int iNewNum = m_pMenuIntHelper->getInt();
+
+    char buff[64];
+    switch (action )
+    {
+      case MENU_ACTION_UP:
+        iNewNum = m_pMenuIntHelper->numIncrease();
+        itoa( iNewNum, buff, 10 );
+        DrawInputRow( buff );
+        *m_pInt = iNewNum;
+        break;
+
+      case MENU_ACTION_DOWN:
+        iNewNum = m_pMenuIntHelper->numDecrease();
+        itoa( iNewNum, buff, 10 );
+        DrawInputRow( buff );
+        *m_pInt = iNewNum;
+        break;
+
+      case MENU_ACTION_SELECT:
+        m_fDoingIntInput = false;
+        DrawMenu();
+        break;
+
+      case MENU_ACTION_BACK:
+        m_fDoingIntInput = false;
+        DrawMenu();
+        break;
+    }
+  }
+  else
+  {
+    m_pMenuLCD->ClearLCD();
+    delay(10);
+    DrawMenu();
+    switch (action )
+    {
+      case MENU_ACTION_UP:
+        this->MenuUp();
+        break;
+      case MENU_ACTION_DOWN:
+        this->MenuDown();
+        break;
+      case MENU_ACTION_SELECT:
+        this->MenuSelect();
+        break;
+      case MENU_ACTION_BACK:
+        this->MenuBack();
+        break;
+    }
+  }
+}
+
+template <class T>
+void MenuManager<T>::MenuUp()
+{
+  MenuEntry *prev = m_pCurrentMenuEntry->getPrevSibling();
+  if( prev != NULL )
+  {
+    m_pCurrentMenuEntry = prev;
+  }
+  else
+  {
+    //Flash?
+  }
+  DrawMenu();
+}
+
+template <class T>
+void MenuManager<T>::MenuDown()
+{
+  MenuEntry *next = m_pCurrentMenuEntry->getNextSibling();
+  if( next != NULL )
+  {
+    m_pCurrentMenuEntry = next;
+  }
+  else
+  {
+    //Flash?
+  }
+  DrawMenu();
+
+}
+
+template <class T>
+void MenuManager<T>::MenuSelect()
+{
+
+  //
+  // EDIT: Changed library to always do a callback even if the
+  // menu has a child. This allows me to keep track of the menu we are in.
+  //
+  if ( m_execRootMenuAction == true) {
+     m_pCurrentMenuEntry->ExecuteCallback();
+  }
+
+  MenuEntry *child = m_pCurrentMenuEntry->getChild();
+  if( child != NULL )
+  {
+    WipeMenu( MenuLCD<T>::LEFT);
+    m_pCurrentMenuEntry = child;
+    DrawMenu();
+  }
+  else
+  {
+    if( !m_pCurrentMenuEntry->isBackEntry() )
+    {
+      WipeMenu( MenuLCD<T>::LEFT);
+    }
+    m_pCurrentMenuEntry->ExecuteCallback();
+    if( !m_fDoingIntInput )
+    {
+      DrawMenu();
+    }
+  }
+}
+
+template <class T>
+void MenuManager<T>::MenuBack()
+{
+  if( m_pCurrentMenuEntry->getParent() != NULL )
+  {
+    WipeMenu( MenuLCD<T>::RIGHT);
+    m_pCurrentMenuEntry = m_pCurrentMenuEntry->getParent();
+    DrawMenu();
+  }
+}
+
+template <class T>
+void MenuManager<T>::SelectRoot()
+{
+  m_pCurrentMenuEntry = m_pRootMenuEntry;
+}
+
+template <class T>
+void MenuManager<T>::DrawInputRow( char *pString )
+{
+  m_pMenuLCD->PrintLineRight( pString, m_pMenuLCD->getLines() - 1 );
+}
+
+template <class T>
+void MenuManager<T>::DoIntInput( int iMin, int iMax, int iStart, int iSteps, char **label, int iLabelLines, int *pInt )
+{
+
+  char buff[64];
+  m_fDoingIntInput = true;
+
+  m_pInt = pInt;
+  *pInt = iStart;
+
+  //The MenuIntHelper class will keep track of the input, but all other logic will stay here
+  if( m_pMenuIntHelper != NULL )
+  {
+    delete m_pMenuIntHelper;
+  }
+  m_pMenuIntHelper = new MenuIntHelper(  iMin, iMax, iStart, iSteps );
+  //print the label
+  m_pMenuLCD->PrintMenu( label, iLabelLines, -1 );
+  m_iIntLine = iLabelLines;  //Off by one because index is zero based
+  itoa( m_pMenuIntHelper->getInt(), buff, 10 );
+    DrawInputRow( buff );
+}

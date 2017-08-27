@@ -18,23 +18,22 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <LiquidCrystal.h>
-
 #ifndef MenuLCD_H
-
 #define MenuLCD_H 1
+
+template <class T>
 class MenuLCD
 {
   public:
-  MenuLCD(int LCDRS, int LCDE, int LCDD4, int LCDD5, int LCDD6, int LCDD7, int characters, int lines);
-  bool MenuLCDSetup();
+  // Note: LCD must be created and initialized outside:
+  MenuLCD(T *pLCD, int characters, int lines);
   bool PrintMenu( char ** pString, int nLines, int nSelectedLine /*= 0*/ );
   bool PrintLineRight( char* pString, int iRow );
   bool PrintLine( char* pString, int iRow );
   int getLines();
   int getCharacters();
   void ClearLCD();
-  LiquidCrystal * getLCD();
+  T * getLCD();
 
   enum Direction{ LEFT, RIGHT };
 
@@ -43,15 +42,130 @@ class MenuLCD
 
   
   private:
-  LiquidCrystal* m_pLCD;
-  int m_LCDRS;
-  int m_LCDE;
-  int m_LCDD4;
-  int m_LCDD5;
-  int m_LCDD6;
-  int m_LCDD7;
+  T* m_pLCD;
   int m_characters;
   int m_lines;
 };
+
+template <class T>
+MenuLCD<T>::MenuLCD(T *pLCD, int characters, int lines)
+: m_pLCD(pLCD),
+  m_characters( characters ),
+  m_lines( lines )
+{
+}
+
+template <class T>
+bool MenuLCD<T>::PrintMenu( char* pString[], int nLines, int nSelectedLine = 0 )
+{
+  m_pLCD->clear();
+  for( int i =0; i < nLines; i++ )
+
+  {
+    if( i == nSelectedLine )
+    {//this line should be surrounded by []
+       m_pLCD->setCursor(0, i);
+       m_pLCD->write( '>');
+       m_pLCD->setCursor(1,i);
+       m_pLCD->print( pString[i] );
+       m_pLCD->setCursor(m_characters - 1, i);
+       //m_pLCD->write( ']');
+    }
+    else
+    {
+      m_pLCD->setCursor(0,i);
+      m_pLCD->print( pString[i] );
+    }
+
+  }
+  return true;
+}
+
+template <class T>
+void MenuLCD<T>::WipeMenu( char* pString[], int nLines, MenuLCD::Direction dir )
+{
+  char lineBuff[ 256 ];
+  m_pLCD->clear();
+  for( int i = 0; i < m_characters; ++i )
+  {
+    for( int j =0; j < nLines; ++j )
+    {
+      m_pLCD->setCursor( 0, j );
+      m_pLCD->setCursor(0,j);
+      if (strlen( pString[j] ) > i )
+      {
+        if( dir == LEFT )
+        {
+          strcpy(lineBuff, (pString[j] + i ) );
+          strcat(lineBuff, "  " );
+        }
+        else
+        {
+          lineBuff[0] = '\0';
+          for( int k = 0; k < i; ++k )
+          {
+            strcat(lineBuff, " " );
+          }
+          strcat(lineBuff, pString[j]);
+        }
+      }
+      else
+      {
+        strcpy(lineBuff, " " );
+      }
+      m_pLCD->print( lineBuff );
+
+    }
+  delay(50);
+  }
+}
+
+template <class T>
+bool MenuLCD<T>::PrintLineRight( char* pString, int iRow )
+{
+  //clear the line
+  char buff[ m_characters ];
+  for( int i = 0; i < m_characters; ++i )
+  {
+    buff[i] = ' ';
+  }
+  m_pLCD->setCursor( 0, iRow );
+  m_pLCD->print( buff );
+  //now print the new number
+  m_pLCD->setCursor(m_characters - strlen(pString),iRow);
+  m_pLCD->print( pString );
+}
+
+template <class T>
+bool MenuLCD<T>::PrintLine( char* pString, int iRow )
+{
+  //clear the line
+  m_pLCD->setCursor( 0, iRow );
+  m_pLCD->print( pString );
+}
+
+template <class T>
+int MenuLCD<T>::getLines()
+{
+  return m_lines;
+}
+
+template <class T>
+int MenuLCD<T>::getCharacters()
+{
+  return m_characters;
+}
+
+template <class T>
+void MenuLCD<T>::ClearLCD()
+{
+  m_pLCD->clear();
+}
+
+template <class T>
+T * MenuLCD<T>::getLCD()
+{
+  return m_pLCD;
+}
 
 #endif
