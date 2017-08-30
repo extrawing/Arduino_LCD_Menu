@@ -19,10 +19,11 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 */
 
 
-#include <Arduino.h>
-
 #ifndef MenuEntry_h
 #define MenuEntry_h 1
+
+#include <Arduino.h>
+#include "MenuAction.h"
 
 
 typedef void (*MENU_ACTION_CALLBACK_FUNC)( char * pMenuText, void * pUserData );
@@ -35,7 +36,11 @@ void MenuEntry_BoolFalseCallbackFunc( char * pMenuText, void * pUserData );
 
 //Use this callback function for a "Back" menu item for hardware that doesn't include a back button
 //pUserData should point to a MenfsuManager object.
+template <class T>
 void MenuEntry_BackCallbackFunc( char * pMenuText, void * pUserData );
+
+template <class T>
+class MenuManager;
 
 //The MenuEntry class represents one menu item in the overall menu system, such as "Set Time" or "Back"
 //The MenuEntry classes point to each other to create a tree of menu items.  You can navigate
@@ -61,25 +66,25 @@ class MenuEntry
   //previous pointer needs to point.
   void setParent( MenuEntry* parent );
   
-  MenuEntry *getNextSibling();
-  MenuEntry *getPrevSibling();
-  MenuEntry *getChild();
-  MenuEntry *getParent();
+  MenuEntry<T> *getNextSibling();
+  MenuEntry<T> *getPrevSibling();
+  MenuEntry<T> *getChild();
+  MenuEntry<T> *getParent();
   //This call will call the action callback for use when the menu item is selected.
   //if this menu entry has any children, the callback will not be executed.
   void ExecuteCallback();
 
-  bool isBackEntry() { return (m_callback == MenuEntry_BackCallbackFunc); }
+  bool isBackEntry() { return (m_callback == MenuEntry_BackCallbackFunc<T>); }
   
   
   private:
   void* m_userData;
   char* m_menuText;
-  MenuEntry* m_parent;
-  MenuEntry* m_child;
-  MenuEntry* m_nextSibling;
+  MenuEntry<T>* m_parent;
+  MenuEntry<T>* m_child;
+  MenuEntry<T>* m_nextSibling;
   MENU_ACTION_CALLBACK_FUNC m_callback;
-  MenuEntry* m_prevSibling;
+  MenuEntry<T>* m_prevSibling;
 };
 
 template <class T>
@@ -104,7 +109,7 @@ void MenuEntry<T>::ExecuteCallback()
 }
 
 template <class T>
-bool MenuEntry<T>::addChild(MenuEntry* child)
+bool MenuEntry<T>::addChild(MenuEntry<T>* child)
 {
   child->setParent( this );
   if(m_child != NULL)
@@ -119,7 +124,7 @@ bool MenuEntry<T>::addChild(MenuEntry* child)
 }
 
 template <class T>
-bool MenuEntry<T>::addSibling( MenuEntry* sibling)
+bool MenuEntry<T>::addSibling( MenuEntry<T>* sibling)
 {
   sibling->setParent( m_parent );
   if( m_nextSibling != NULL )
@@ -131,10 +136,11 @@ bool MenuEntry<T>::addSibling( MenuEntry* sibling)
     m_nextSibling = sibling;
     sibling->setPrevSibling( this );
   }
+  return true;
 }
 
 template <class T>
-void MenuEntry<T>::setPrevSibling( MenuEntry * pPrevSibling)
+void MenuEntry<T>::setPrevSibling( MenuEntry<T> * pPrevSibling)
 {
   m_prevSibling = pPrevSibling;
 }
@@ -146,31 +152,31 @@ char * MenuEntry<T>::getMenuText()
 }
 
 template <class T>
-MenuEntry *MenuEntry<T>::getNextSibling()
+MenuEntry<T> *MenuEntry<T>::getNextSibling()
 {
   return m_nextSibling;
 }
 
 template <class T>
-MenuEntry *MenuEntry<T>::getPrevSibling()
+MenuEntry<T> *MenuEntry<T>::getPrevSibling()
 {
   return m_prevSibling;
 }
 
 template <class T>
-MenuEntry *MenuEntry<T>::getChild()
+MenuEntry<T> *MenuEntry<T>::getChild()
 {
   return m_child;
 }
 
 template <class T>
-MenuEntry *MenuEntry<T>::getParent()
+MenuEntry<T> *MenuEntry<T>::getParent()
 {
   return m_parent;
 }
 
 template <class T>
-void MenuEntry<T>::setParent( MenuEntry * parent)
+void MenuEntry<T>::setParent( MenuEntry<T> * parent)
 {
   m_parent = parent;
 }

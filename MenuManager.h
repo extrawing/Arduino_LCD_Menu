@@ -21,9 +21,8 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 
 #include "MenuEntry.h"
 #include "MenuLCD.h"
+#include "MenuAction.h"
 #include "MenuIntHelper.h"
-
-enum MENU_ACTION { MENU_ACTION_UP, MENU_ACTION_DOWN, MENU_ACTION_SELECT, MENU_ACTION_BACK };
 
 template <class T>
 class MenuManager
@@ -32,27 +31,26 @@ class MenuManager
   MenuManager(MenuLCD<T>* pMenuLCD);
   MenuManager(MenuLCD<T>* pMenuLCD, bool rootAction);
 
-  bool addMenuRoot( MenuEntry * p_menuEntry);
-  MenuEntry * getMenuRoot();
+  bool addMenuRoot( MenuEntry<T> * p_menuEntry);
+  MenuEntry<T> * getMenuRoot();
   void DrawMenu();
   void DoMenuAction( MENU_ACTION action );
   void MenuUp();
   void MenuDown();
   void MenuSelect();
   void MenuBack();
-  void addChild( MenuEntry * p_menuEntry );    
-  void addSibling( MenuEntry * p_menuEntry );  
+  void addChild( MenuEntry<T> * p_menuEntry );
+  void addSibling( MenuEntry<T> * p_menuEntry );
   void SelectRoot();
   void DoIntInput( int iMin, int iMax, int iStart, int iSteps, char **label, int iLabelLines, int *pInt );
   void DrawInputRow( char *pString );
 
-  void WipeMenu( MenuLCD<T>::Direction dir);
-
+  void WipeMenu(typename MenuLCD<T>::Direction dir);
 
   
   private:
-  MenuEntry* m_pRootMenuEntry;
-  MenuEntry* m_pCurrentMenuEntry;
+  MenuEntry<T>* m_pRootMenuEntry;
+  MenuEntry<T>* m_pCurrentMenuEntry;
   MenuLCD<T>* m_pMenuLCD;
   unsigned int m_fDoingIntInput;
   MenuIntHelper *m_pMenuIntHelper;
@@ -74,32 +72,33 @@ MenuManager<T>::MenuManager(MenuLCD<T>* pMenuLCD, bool pexecRootAction ):
  m_fDoingIntInput( false ) { }
 
 template <class T>
-bool MenuManager<T>::addMenuRoot( MenuEntry * p_menuItem)
+bool MenuManager<T>::addMenuRoot( MenuEntry<T> * p_menuItem)
 {
   m_pRootMenuEntry = p_menuItem;
   m_pCurrentMenuEntry = p_menuItem;
+  return true;
 }
 
 template <class T>
-void MenuManager<T>::addSibling( MenuEntry * p_menuItem)
+void MenuManager<T>::addSibling( MenuEntry<T> * p_menuItem)
 {
   m_pCurrentMenuEntry->addSibling( p_menuItem );
 }
 
 template <class T>
-void MenuManager<T>::addChild( MenuEntry * p_menuItem)
+void MenuManager<T>::addChild( MenuEntry<T> * p_menuItem)
 {
   m_pCurrentMenuEntry->addChild( p_menuItem );
 }
 
 template <class T>
-MenuEntry * MenuManager<T>::getMenuRoot()
+MenuEntry<T> * MenuManager<T>::getMenuRoot()
 {
   return m_pRootMenuEntry;
 }
 
 template <class T>
-void MenuManager<T>::WipeMenu( MenuLCD<T>::Direction dir )
+void MenuManager<T>::WipeMenu(typename MenuLCD<T>::Direction dir )
 {
   if( dir == MenuLCD<T>::LEFT )
   {
@@ -203,7 +202,7 @@ void MenuManager<T>::DoMenuAction( MENU_ACTION action )
 template <class T>
 void MenuManager<T>::MenuUp()
 {
-  MenuEntry *prev = m_pCurrentMenuEntry->getPrevSibling();
+  MenuEntry<T> *prev = m_pCurrentMenuEntry->getPrevSibling();
   if( prev != NULL )
   {
     m_pCurrentMenuEntry = prev;
@@ -218,7 +217,7 @@ void MenuManager<T>::MenuUp()
 template <class T>
 void MenuManager<T>::MenuDown()
 {
-  MenuEntry *next = m_pCurrentMenuEntry->getNextSibling();
+  MenuEntry<T> *next = m_pCurrentMenuEntry->getNextSibling();
   if( next != NULL )
   {
     m_pCurrentMenuEntry = next;
@@ -243,7 +242,7 @@ void MenuManager<T>::MenuSelect()
      m_pCurrentMenuEntry->ExecuteCallback();
   }
 
-  MenuEntry *child = m_pCurrentMenuEntry->getChild();
+  MenuEntry<T> *child = m_pCurrentMenuEntry->getChild();
   if( child != NULL )
   {
     WipeMenu( MenuLCD<T>::LEFT);
