@@ -26,7 +26,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 #include "MenuAction.h"
 
 
-typedef void (*MENU_ACTION_CALLBACK_FUNC)( char * pMenuText, void * pUserData );
+typedef MENU_ACTION_RESULT (*MENU_ACTION_CALLBACK_FUNC)( char * pMenuText, void * pUserData );
 
 
 //To use these functions, pass a function pointer as the argument to the MenuEntry constructor.
@@ -37,7 +37,7 @@ void MenuEntry_BoolFalseCallbackFunc( char * pMenuText, void * pUserData );
 //Use this callback function for a "Back" menu item for hardware that doesn't include a back button
 //pUserData should point to a MenfsuManager object.
 template <class T>
-void MenuEntry_BackCallbackFunc( char * pMenuText, void * pUserData );
+MENU_ACTION_RESULT MenuEntry_BackCallbackFunc( char * pMenuText, void * pUserData );
 
 template <class T>
 class MenuManager;
@@ -50,7 +50,7 @@ class MenuEntry
 {
   public:
   //Constructor to create each entry.
-  MenuEntry( char * menuText, void * userData, MENU_ACTION_CALLBACK_FUNC func);
+  MenuEntry( const char * menuText, void * userData, MENU_ACTION_CALLBACK_FUNC func);
   //add a child menu item.  They will be kept it the order they are added, from top to bottom.
   bool addChild( MenuEntry* child);
   //Add a menu item as a sibling of this one, at the end of the sibling chain.
@@ -72,7 +72,7 @@ class MenuEntry
   MenuEntry<T> *getParent();
   //This call will call the action callback for use when the menu item is selected.
   //if this menu entry has any children, the callback will not be executed.
-  void ExecuteCallback();
+  MENU_ACTION_RESULT ExecuteCallback();
 
   bool isBackEntry() { return (m_callback == MenuEntry_BackCallbackFunc<T>); }
   
@@ -88,7 +88,7 @@ class MenuEntry
 };
 
 template <class T>
-MenuEntry<T>::MenuEntry( char * menuText, void * userData, MENU_ACTION_CALLBACK_FUNC func)
+MenuEntry<T>::MenuEntry( const char * menuText, void * userData, MENU_ACTION_CALLBACK_FUNC func)
 {
   m_menuText = strdup(menuText);
   m_userData = userData;
@@ -100,12 +100,13 @@ MenuEntry<T>::MenuEntry( char * menuText, void * userData, MENU_ACTION_CALLBACK_
 }
 
 template <class T>
-void MenuEntry<T>::ExecuteCallback()
+MENU_ACTION_RESULT MenuEntry<T>::ExecuteCallback()
 {
   if( m_callback != NULL )
   {
-    m_callback(m_menuText, m_userData);
+    return m_callback(m_menuText, m_userData);
   }
+  return MENU_ACTION_RESULT_NONE;
 }
 
 template <class T>
@@ -200,7 +201,7 @@ void MenuEntry_BoolFalseCallbackFunc( char * pMenuText, void * pUserData )
 //}
 
 template <class T>
-void MenuEntry_BackCallbackFunc( char * pMenuText, void * pUserData )
+MENU_ACTION_RESULT MenuEntry_BackCallbackFunc( char * pMenuText, void * pUserData )
 {
   ((MenuManager<T> *)pUserData)->DoMenuAction( MENU_ACTION_BACK );
 }

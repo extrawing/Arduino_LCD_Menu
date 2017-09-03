@@ -125,18 +125,18 @@ void MenuManager<T>::DrawMenu()
   {
     if( m_pCurrentMenuEntry->getPrevSibling() != NULL )
     {
-      char *pMenuTexts[2] = {m_pCurrentMenuEntry->getPrevSibling()->getMenuText(), m_pCurrentMenuEntry->getMenuText()};
+      const char *pMenuTexts[2] = {m_pCurrentMenuEntry->getPrevSibling()->getMenuText(), m_pCurrentMenuEntry->getMenuText()};
       m_pMenuLCD->PrintMenu( pMenuTexts, 2, 1 );
     }
     else
     {
-      char * pText = m_pCurrentMenuEntry->getMenuText();
+      const char * pText = m_pCurrentMenuEntry->getMenuText();
       m_pMenuLCD->PrintMenu( &pText, 1, 0 );
     }
   }
   else
   {
-    char *pMenuTexts[2] = {m_pCurrentMenuEntry->getMenuText(), m_pCurrentMenuEntry->getNextSibling()->getMenuText()};
+    const char *pMenuTexts[2] = {m_pCurrentMenuEntry->getMenuText(), m_pCurrentMenuEntry->getNextSibling()->getMenuText()};
     m_pMenuLCD->PrintMenu( pMenuTexts, 2, 0 );
   }
 }
@@ -152,14 +152,14 @@ void MenuManager<T>::DoMenuAction( MENU_ACTION action )
     switch (action )
     {
       case MENU_ACTION_UP:
-        iNewNum = m_pMenuIntHelper->numIncrease();
+        iNewNum = m_pMenuIntHelper->numDecrease();
         itoa( iNewNum, buff, 10 );
         DrawInputRow( buff );
         *m_pInt = iNewNum;
         break;
 
       case MENU_ACTION_DOWN:
-        iNewNum = m_pMenuIntHelper->numDecrease();
+        iNewNum = m_pMenuIntHelper->numIncrease();
         itoa( iNewNum, buff, 10 );
         DrawInputRow( buff );
         *m_pInt = iNewNum;
@@ -173,6 +173,8 @@ void MenuManager<T>::DoMenuAction( MENU_ACTION action )
       case MENU_ACTION_BACK:
         m_fDoingIntInput = false;
         DrawMenu();
+        break;
+      case MENU_ACTION_NONE:
         break;
     }
   }
@@ -190,11 +192,13 @@ void MenuManager<T>::DoMenuAction( MENU_ACTION action )
         this->MenuDown();
         break;
       case MENU_ACTION_SELECT:
-        this->MenuSelect();
+    	this->MenuSelect();
         break;
       case MENU_ACTION_BACK:
         this->MenuBack();
         break;
+      case MENU_ACTION_NONE:
+    	break;
     }
   }
 }
@@ -233,6 +237,7 @@ void MenuManager<T>::MenuDown()
 template <class T>
 void MenuManager<T>::MenuSelect()
 {
+  MENU_ACTION_RESULT result = MENU_ACTION_RESULT_NONE;
 
   //
   // EDIT: Changed library to always do a callback even if the
@@ -255,8 +260,8 @@ void MenuManager<T>::MenuSelect()
     {
       WipeMenu( MenuLCD<T>::LEFT);
     }
-    m_pCurrentMenuEntry->ExecuteCallback();
-    if( !m_fDoingIntInput )
+    MENU_ACTION_RESULT result = m_pCurrentMenuEntry->ExecuteCallback();
+    if( !m_fDoingIntInput && result != MENU_ACTION_RESULT_RETAIN_DISPLAY)
     {
       DrawMenu();
     }

@@ -27,9 +27,9 @@ class MenuLCD
   public:
   // Note: LCD must be created and initialized outside:
   MenuLCD(T *pLCD, int characters, int lines);
-  bool PrintMenu( char ** pString, int nLines, int nSelectedLine /*= 0*/ );
-  bool PrintLineRight( char* pString, int iRow );
-  bool PrintLine( char* pString, int iRow );
+  bool PrintMenu( const char ** pString, int nLines, int nSelectedLine /*= 0*/ );
+  bool PrintLineRight( const char* pString, int iRow );
+  bool PrintLine( const char* pString, int iRow );
   int getLines();
   int getCharacters();
   void ClearLCD();
@@ -38,7 +38,7 @@ class MenuLCD
   typedef enum { LEFT, RIGHT } Direction;
 
 
-  void WipeMenu( char* pString[], int nLines, typename MenuLCD<T>::Direction dir );
+  void WipeMenu( const char* pString[], int nLines, typename MenuLCD<T>::Direction dir );
 
   
   private:
@@ -56,33 +56,30 @@ MenuLCD<T>::MenuLCD(T *pLCD, int characters, int lines)
 }
 
 template <class T>
-bool MenuLCD<T>::PrintMenu( char* pString[], int nLines, int nSelectedLine /*= 0*/)
+bool MenuLCD<T>::PrintMenu( const char* pString[], int nLines, int nSelectedLine /*= 0*/)
 {
   m_pLCD->clear();
   for( int i =0; i < nLines; i++ )
-
   {
-    if( i == nSelectedLine )
-    {//this line should be surrounded by []
-       m_pLCD->setCursor(0, i);
-       m_pLCD->write( '>');
-       m_pLCD->setCursor(1,i);
-       m_pLCD->print( pString[i] );
-       m_pLCD->setCursor(m_characters - 1, i);
-       //m_pLCD->write( ']');
-    }
-    else
-    {
-      m_pLCD->setCursor(0,i);
-      m_pLCD->print( pString[i] );
-    }
-
+    m_pLCD->setCursor(0, i);
+	if (nSelectedLine >= 0) {
+      if(i == nSelectedLine)
+      {
+         m_pLCD->write( '>');
+      }
+      else
+      {
+        m_pLCD->write(' ');
+      }
+      m_pLCD->setCursor(1,i);
+	}
+    m_pLCD->print( pString[i] );
   }
   return true;
 }
 
 template <class T>
-void MenuLCD<T>::WipeMenu( char* pString[], int nLines, typename MenuLCD<T>::Direction dir )
+void MenuLCD<T>::WipeMenu( const char* pString[], int nLines, typename MenuLCD<T>::Direction dir )
 {
   char lineBuff[ 256 ];
   m_pLCD->clear();
@@ -121,7 +118,7 @@ void MenuLCD<T>::WipeMenu( char* pString[], int nLines, typename MenuLCD<T>::Dir
 }
 
 template <class T>
-bool MenuLCD<T>::PrintLineRight( char* pString, int iRow )
+bool MenuLCD<T>::PrintLineRight( const char* pString, int iRow )
 {
   //clear the line
   char buff[ m_characters ];
@@ -138,7 +135,7 @@ bool MenuLCD<T>::PrintLineRight( char* pString, int iRow )
 }
 
 template <class T>
-bool MenuLCD<T>::PrintLine( char* pString, int iRow )
+bool MenuLCD<T>::PrintLine( const char* pString, int iRow )
 {
   //clear the line
   m_pLCD->setCursor( 0, iRow );
