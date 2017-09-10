@@ -204,6 +204,7 @@ template <class T>
 MENU_ACTION_RESULT MenuEntry_BackCallbackFunc( char * pMenuText, void * pUserData )
 {
   ((MenuManager<T> *)pUserData)->DoMenuAction( MENU_ACTION_BACK );
+  return MENU_ACTION_RESULT_NONE;
 }
 
 
