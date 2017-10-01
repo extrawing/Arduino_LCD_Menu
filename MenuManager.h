@@ -42,7 +42,7 @@ class MenuManager
   void addChild( MenuEntry<T> * p_menuEntry );
   void addSibling( MenuEntry<T> * p_menuEntry );
   void SelectRoot();
-  void DoIntInput( int iMin, int iMax, int iStart, int iSteps, char **label, int iLabelLines, int *pInt );
+  void DoIntInput( int iMin, int iMax, int iStart, int iSteps, const char **label, int iLabelLines, int *pInt );
   void DrawInputRow( char *pString );
 
   void WipeMenu(typename MenuLCD<T>::Direction dir);
@@ -292,9 +292,8 @@ void MenuManager<T>::DrawInputRow( char *pString )
 }
 
 template <class T>
-void MenuManager<T>::DoIntInput( int iMin, int iMax, int iStart, int iSteps, char **label, int iLabelLines, int *pInt )
+void MenuManager<T>::DoIntInput( int iMin, int iMax, int iStart, int iSteps, const char **label, int iLabelLines, int *pInt )
 {
-
   char buff[64];
   m_fDoingIntInput = true;
 
