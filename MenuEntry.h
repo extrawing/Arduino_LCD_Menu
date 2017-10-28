@@ -26,7 +26,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 #include "MenuAction.h"
 
 
-typedef MENU_ACTION_RESULT (*MENU_ACTION_CALLBACK_FUNC)( char * pMenuText, void * pUserData );
+typedef MENU_ACTION_RESULT (*MENU_ACTION_CALLBACK_FUNC)( const char * pMenuText, void * pUserData );
 
 
 //To use these functions, pass a function pointer as the argument to the MenuEntry constructor.
@@ -37,7 +37,7 @@ void MenuEntry_BoolFalseCallbackFunc( char * pMenuText, void * pUserData );
 //Use this callback function for a "Back" menu item for hardware that doesn't include a back button
 //pUserData should point to a MenfsuManager object.
 template <class T>
-MENU_ACTION_RESULT MenuEntry_BackCallbackFunc( char * pMenuText, void * pUserData );
+MENU_ACTION_RESULT MenuEntry_BackCallbackFunc( const char * pMenuText, void * pUserData );
 
 template <class T>
 class MenuManager;
@@ -51,6 +51,7 @@ class MenuEntry
   public:
   //Constructor to create each entry.
   MenuEntry( const char * menuText, void * userData, MENU_ACTION_CALLBACK_FUNC func);
+  MenuEntry( const __FlashStringHelper * menuText, void * userData, MENU_ACTION_CALLBACK_FUNC func);
   //add a child menu item.  They will be kept it the order they are added, from top to bottom.
   bool addChild( MenuEntry* child);
   //Add a menu item as a sibling of this one, at the end of the sibling chain.
@@ -61,7 +62,8 @@ class MenuEntry
   //Can set the action call back dynamically. Overrides what was passed to the constructor.
   bool addActionCallback( MENU_ACTION_CALLBACK_FUNC pCallback);
   
-  char* getMenuText();
+  const char* getMenuText();
+  bool isProgMem();
   //Sets the previous sibling, mostly used during menu creation to notify a new entry where it's
   //previous pointer needs to point.
   void setParent( MenuEntry* parent );
@@ -76,10 +78,10 @@ class MenuEntry
 
   bool isBackEntry() { return (m_callback == MenuEntry_BackCallbackFunc<T>); }
   
-  
   private:
   void* m_userData;
-  char* m_menuText;
+  const char* m_menuText;
+  bool m_isProgMem;
   MenuEntry<T>* m_parent;
   MenuEntry<T>* m_child;
   MenuEntry<T>* m_nextSibling;
@@ -88,16 +90,14 @@ class MenuEntry
 };
 
 template <class T>
-MenuEntry<T>::MenuEntry( const char * menuText, void * userData, MENU_ACTION_CALLBACK_FUNC func)
-{
-  m_menuText = strdup(menuText);
-  m_userData = userData;
-  m_nextSibling = NULL;
-  m_prevSibling = NULL;
-  m_child = NULL;
-  m_parent = NULL;
-  m_callback = func;
-}
+MenuEntry<T>::MenuEntry( const char * menuText, void * userData, MENU_ACTION_CALLBACK_FUNC func):
+	m_userData(userData), m_menuText(menuText), m_parent(NULL), m_child(NULL),
+	m_nextSibling(NULL), m_callback(func), m_prevSibling(NULL), m_isProgMem(false) {}
+
+template <class T>
+MenuEntry<T>::MenuEntry( const __FlashStringHelper * menuText, void * userData, MENU_ACTION_CALLBACK_FUNC func):
+	m_userData(userData), m_menuText((const char*)menuText), m_parent(NULL), m_child(NULL),
+	m_nextSibling(NULL), m_callback(func), m_prevSibling(NULL), m_isProgMem(true) {}
 
 template <class T>
 MENU_ACTION_RESULT MenuEntry<T>::ExecuteCallback()
@@ -147,9 +147,15 @@ void MenuEntry<T>::setPrevSibling( MenuEntry<T> * pPrevSibling)
 }
 
 template <class T>
-char * MenuEntry<T>::getMenuText()
+const char * MenuEntry<T>::getMenuText()
 {
   return m_menuText;
+}
+
+template <class T>
+bool MenuEntry<T>::isProgMem()
+{
+  return m_isProgMem;
 }
 
 template <class T>
@@ -183,13 +189,13 @@ void MenuEntry<T>::setParent( MenuEntry<T> * parent)
 }
 
 template <class T>
-void MenuEntry_BoolTrueCallbackFunc( char * pMenuText, void * pUserData )
+void MenuEntry_BoolTrueCallbackFunc( const char * pMenuText, void * pUserData )
 {
   *((unsigned int *)pUserData) = true;
 }
 
 template <class T>
-void MenuEntry_BoolFalseCallbackFunc( char * pMenuText, void * pUserData )
+void MenuEntry_BoolFalseCallbackFunc( const char * pMenuText, void * pUserData )
 {
   *((unsigned int *)pUserData) = false;
 }
@@ -201,7 +207,7 @@ void MenuEntry_BoolFalseCallbackFunc( char * pMenuText, void * pUserData )
 //}
 
 template <class T>
-MENU_ACTION_RESULT MenuEntry_BackCallbackFunc( char * pMenuText, void * pUserData )
+MENU_ACTION_RESULT MenuEntry_BackCallbackFunc( const char * pMenuText, void * pUserData )
 {
   ((MenuManager<T> *)pUserData)->DoMenuAction( MENU_ACTION_BACK );
   return MENU_ACTION_RESULT_NONE;

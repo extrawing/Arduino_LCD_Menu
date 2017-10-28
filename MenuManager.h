@@ -18,6 +18,8 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifndef MENUMANAGER_H_
+#define MENUMANAGER_H_
 
 #include "MenuEntry.h"
 #include "MenuLCD.h"
@@ -118,25 +120,73 @@ void MenuManager<T>::WipeMenu(typename MenuLCD<T>::Direction dir )
   }
 }
 
+// TODO: Reimplement the function below
+// As an option, add one more template param: max str size;
 template <class T>
 void MenuManager<T>::DrawMenu()
 {
+  char textBufs[2][20];
   if( m_pCurrentMenuEntry->getNextSibling() == NULL )
   {
     if( m_pCurrentMenuEntry->getPrevSibling() != NULL )
     {
-      const char *pMenuTexts[2] = {m_pCurrentMenuEntry->getPrevSibling()->getMenuText(), m_pCurrentMenuEntry->getMenuText()};
+      const char *pMenuTexts[2] = {NULL};// = {m_pCurrentMenuEntry->getPrevSibling()->getMenuText(), m_pCurrentMenuEntry->getMenuText()};
+      if (m_pCurrentMenuEntry->getPrevSibling()->isProgMem())
+      {
+    	  pMenuTexts[0] = strncpy_P(textBufs[0], m_pCurrentMenuEntry->getPrevSibling()->getMenuText(), 19);
+      }
+      else
+      {
+    	  pMenuTexts[0] = m_pCurrentMenuEntry->getPrevSibling()->getMenuText();
+      }
+
+      if (m_pCurrentMenuEntry->isProgMem())
+      {
+       	  pMenuTexts[1] = strncpy_P(textBufs[1], m_pCurrentMenuEntry->getMenuText(), 19);
+      }
+      else
+      {
+      	  pMenuTexts[1] = m_pCurrentMenuEntry->getMenuText();
+      }
+
       m_pMenuLCD->PrintMenu( pMenuTexts, 2, 1 );
     }
     else
     {
-      const char * pText = m_pCurrentMenuEntry->getMenuText();
+      //const char * pText = m_pCurrentMenuEntry->getMenuText();
+      const char * pText = NULL;
+      if (m_pCurrentMenuEntry->isProgMem())
+      {
+    	  pText = strncpy_P(textBufs[0], m_pCurrentMenuEntry->getMenuText(), 19);
+      }
+      else
+      {
+    	  pText = m_pCurrentMenuEntry->getMenuText();
+      }
       m_pMenuLCD->PrintMenu( &pText, 1, 0 );
     }
   }
   else
   {
-    const char *pMenuTexts[2] = {m_pCurrentMenuEntry->getMenuText(), m_pCurrentMenuEntry->getNextSibling()->getMenuText()};
+		const char *pMenuTexts[2] = { NULL }; // {m_pCurrentMenuEntry->getMenuText(), m_pCurrentMenuEntry->getNextSibling()->getMenuText()};
+		if (m_pCurrentMenuEntry->isProgMem())
+		{
+			pMenuTexts[0] = strncpy_P(textBufs[0], m_pCurrentMenuEntry->getMenuText(), 19);
+		}
+		else
+		{
+			pMenuTexts[0] = m_pCurrentMenuEntry->getMenuText();
+		}
+
+		if (m_pCurrentMenuEntry->getNextSibling()->isProgMem())
+		{
+			pMenuTexts[1] = strncpy_P(textBufs[1], m_pCurrentMenuEntry->getNextSibling()->getMenuText(), 19);
+		}
+		else
+		{
+			pMenuTexts[1] =	m_pCurrentMenuEntry->getNextSibling()->getMenuText();
+		}
+
     m_pMenuLCD->PrintMenu( pMenuTexts, 2, 0 );
   }
 }
@@ -237,8 +287,6 @@ void MenuManager<T>::MenuDown()
 template <class T>
 void MenuManager<T>::MenuSelect()
 {
-  MENU_ACTION_RESULT result = MENU_ACTION_RESULT_NONE;
-
   //
   // EDIT: Changed library to always do a callback even if the
   // menu has a child. This allows me to keep track of the menu we are in.
@@ -312,3 +360,5 @@ void MenuManager<T>::DoIntInput( int iMin, int iMax, int iStart, int iSteps, con
   itoa( m_pMenuIntHelper->getInt(), buff, 10 );
     DrawInputRow( buff );
 }
+
+#endif //!MENUMANAGER_H_
