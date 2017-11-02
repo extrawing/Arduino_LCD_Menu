@@ -125,7 +125,7 @@ void MenuManager<T>::WipeMenu(typename MenuLCD<T>::Direction dir )
 template <class T>
 void MenuManager<T>::DrawMenu()
 {
-  char textBufs[2][20];
+  char textBufs[2][20] = {NULL};
   if( m_pCurrentMenuEntry->getNextSibling() == NULL )
   {
     if( m_pCurrentMenuEntry->getPrevSibling() != NULL )
