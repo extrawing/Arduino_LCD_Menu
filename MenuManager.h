@@ -120,74 +120,38 @@ void MenuManager<T>::WipeMenu(typename MenuLCD<T>::Direction dir )
   }
 }
 
-// TODO: Reimplement the function below
-// As an option, add one more template param: max str size;
 template <class T>
 void MenuManager<T>::DrawMenu()
 {
-  char textBufs[2][20] = {NULL};
   if( m_pCurrentMenuEntry->getNextSibling() == NULL )
   {
     if( m_pCurrentMenuEntry->getPrevSibling() != NULL )
     {
-      const char *pMenuTexts[2] = {NULL};// = {m_pCurrentMenuEntry->getPrevSibling()->getMenuText(), m_pCurrentMenuEntry->getMenuText()};
-      if (m_pCurrentMenuEntry->getPrevSibling()->isProgMem())
-      {
-    	  pMenuTexts[0] = strncpy_P(textBufs[0], m_pCurrentMenuEntry->getPrevSibling()->getMenuText(), 19);
+      const char *pMenuTexts[2] = {m_pCurrentMenuEntry->getPrevSibling()->getMenuText(), m_pCurrentMenuEntry->getMenuText()};
+      if (!m_pCurrentMenuEntry->isProgMem()) {
+    	  m_pMenuLCD->PrintMenu( pMenuTexts, 2, 1 );
+      } else {
+    	  m_pMenuLCD->PrintMenu((const __FlashStringHelper **)pMenuTexts, 2, 1 );
       }
-      else
-      {
-    	  pMenuTexts[0] = m_pCurrentMenuEntry->getPrevSibling()->getMenuText();
-      }
-
-      if (m_pCurrentMenuEntry->isProgMem())
-      {
-       	  pMenuTexts[1] = strncpy_P(textBufs[1], m_pCurrentMenuEntry->getMenuText(), 19);
-      }
-      else
-      {
-      	  pMenuTexts[1] = m_pCurrentMenuEntry->getMenuText();
-      }
-
-      m_pMenuLCD->PrintMenu( pMenuTexts, 2, 1 );
     }
     else
     {
-      //const char * pText = m_pCurrentMenuEntry->getMenuText();
-      const char * pText = NULL;
-      if (m_pCurrentMenuEntry->isProgMem())
-      {
-    	  pText = strncpy_P(textBufs[0], m_pCurrentMenuEntry->getMenuText(), 19);
+      const char * pText = m_pCurrentMenuEntry->getMenuText();
+      if (!m_pCurrentMenuEntry->isProgMem()) {
+    	  m_pMenuLCD->PrintMenu( &pText, 1, 0 );
+      } else {
+    	  m_pMenuLCD->PrintMenu( (const __FlashStringHelper **)&pText, 1, 0 );
       }
-      else
-      {
-    	  pText = m_pCurrentMenuEntry->getMenuText();
-      }
-      m_pMenuLCD->PrintMenu( &pText, 1, 0 );
     }
   }
   else
   {
-		const char *pMenuTexts[2] = { NULL }; // {m_pCurrentMenuEntry->getMenuText(), m_pCurrentMenuEntry->getNextSibling()->getMenuText()};
-		if (m_pCurrentMenuEntry->isProgMem())
-		{
-			pMenuTexts[0] = strncpy_P(textBufs[0], m_pCurrentMenuEntry->getMenuText(), 19);
-		}
-		else
-		{
-			pMenuTexts[0] = m_pCurrentMenuEntry->getMenuText();
-		}
-
-		if (m_pCurrentMenuEntry->getNextSibling()->isProgMem())
-		{
-			pMenuTexts[1] = strncpy_P(textBufs[1], m_pCurrentMenuEntry->getNextSibling()->getMenuText(), 19);
-		}
-		else
-		{
-			pMenuTexts[1] =	m_pCurrentMenuEntry->getNextSibling()->getMenuText();
-		}
-
-    m_pMenuLCD->PrintMenu( pMenuTexts, 2, 0 );
+    const char *pMenuTexts[2] = {m_pCurrentMenuEntry->getMenuText(), m_pCurrentMenuEntry->getNextSibling()->getMenuText()};
+    if (!m_pCurrentMenuEntry->isProgMem()) {
+    	m_pMenuLCD->PrintMenu( pMenuTexts, 2, 0 );
+    } else {
+    	m_pMenuLCD->PrintMenu( (const __FlashStringHelper **)pMenuTexts, 2, 0 );
+    }
   }
 }
 
