@@ -26,6 +26,8 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 #include "MenuAction.h"
 #include "MenuIntHelper.h"
 
+#define INT_BUF_SIZE 10
+
 template <class T>
 class MenuManager
 {
@@ -162,7 +164,7 @@ void MenuManager<T>::DoMenuAction( MENU_ACTION action )
   {
     int iNewNum = m_pMenuIntHelper->getInt();
 
-    char buff[64];
+    char buff[INT_BUF_SIZE] = {0};
     switch (action )
     {
       case MENU_ACTION_UP:
@@ -306,7 +308,7 @@ void MenuManager<T>::DrawInputRow( char *pString )
 template <class T>
 void MenuManager<T>::DoIntInput( int iMin, int iMax, int iStart, int iSteps, const char **label, int iLabelLines, int *pInt )
 {
-  char buff[64];
+  char buff[INT_BUF_SIZE] = {0};
   m_fDoingIntInput = true;
 
   m_pInt = pInt;
