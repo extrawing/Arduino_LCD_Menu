@@ -27,8 +27,7 @@ class MenuLCD
   public:
   // Note: LCD must be created and initialized outside:
   MenuLCD(T *pLCD, int characters, int lines);
-  bool PrintMenu( const char ** pString, int nLines, int nSelectedLine /*= 0*/ );
-  bool PrintMenu( const __FlashStringHelper * pString[], int nLines, int nSelectedLine /*= 0*/);
+  template <typename MYSTR> bool PrintMenu( const MYSTR * pString[], int nLines, int nSelectedLine /*= 0*/);
   bool PrintLineRight( const char* pString, int iRow );
   bool PrintLine( const char* pString, int iRow );
   int getLines();
@@ -57,30 +56,8 @@ MenuLCD<T>::MenuLCD(T *pLCD, int characters, int lines)
 }
 
 template <class T>
-bool MenuLCD<T>::PrintMenu( const char* pString[], int nLines, int nSelectedLine /*= 0*/)
-{
-  m_pLCD->clear();
-  for( int i =0; i < nLines; i++ )
-  {
-    m_pLCD->setCursor(0, i);
-	if (nSelectedLine >= 0) {
-      if(i == nSelectedLine)
-      {
-         m_pLCD->write( '>');
-      }
-      else
-      {
-        m_pLCD->write(' ');
-      }
-      m_pLCD->setCursor(1,i);
-	}
-    m_pLCD->print( pString[i] );
-  }
-  return true;
-}
-
-template <class T>
-bool MenuLCD<T>::PrintMenu( const __FlashStringHelper * pString[], int nLines, int nSelectedLine /*= 0*/)
+template <typename MYSTR>
+bool MenuLCD<T>::PrintMenu( const MYSTR* pString[], int nLines, int nSelectedLine /*= 0*/)
 {
   m_pLCD->clear();
   for( int i =0; i < nLines; i++ )
